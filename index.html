@@ -1,0 +1,1617 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Buổi 2: Thiết kế Cấu trúc Lương Cạnh tranh</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Font Awesome (cho biểu tượng) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    
+    <style>
+        /* Tùy chỉnh font chữ Oswald */
+        @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;500;700&display=swap');
+
+        body {
+            font-family: 'Oswald', sans-serif;
+            background-color: #111;
+            color: #E0E0E0;
+            margin: 0;
+            padding: 0;
+            overflow: hidden; /* Ẩn thanh cuộn của body */
+            /* Hình nền môi trường làm việc với lớp phủ tối */
+            background-image: linear-gradient(rgba(17, 17, 17, 0.85), rgba(17, 17, 17, 0.85)), url('https://images.unsplash.com/photo-1519389950473-47324574b676?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3wzNjAzN3wwfDF8cGF0a3x8fDE3NjA3fHx8fHw&ixlib=rb-4.0.3&q=80&w=2048');
+            background-size: cover;
+            background-position: center;
+        }
+
+        /* Lớp container chính cho sân khấu */
+        #presentation-container {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            padding: 1rem; /* Thêm padding để các nút điều khiển không bị dính sát cạnh */
+            box-sizing: border-box;
+        }
+
+        /* Lớp chứa slide - thẻ nổi */
+        #slide-container {
+            /* Tỷ lệ 16:9 */
+            width: 90vw;
+            max-width: 1280px; /* Giới hạn chiều rộng tối đa */
+            aspect-ratio: 16 / 9;
+            background-color: #1a1a1a; /* Nền tối hơn một chút */
+            border-radius: 0.75rem; /* bo góc */
+            box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.5), 0 8px 10px -6px rgb(0 0 0 / 0.5); /* Đổ bóng đậm hơn */
+            position: relative;
+            overflow: hidden; /* Quan trọng: để các slide con không bị tràn */
+        }
+
+        .slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            padding: 3.5rem 4.5rem; /* Padding */
+            box-sizing: border-box;
+            opacity: 0;
+            transition: opacity 0.6s ease-in-out;
+            display: flex;
+            flex-direction: column;
+            justify-content: center; /* Căn giữa nội dung theo chiều dọc */
+            align-items: flex-start; /* Căn trái nội dung */
+            visibility: hidden;
+            background-size: cover;
+            background-position: center;
+            background-color: #212121; /* Nền mặc định tối */
+        }
+
+        .slide.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        /* Icon lớn minh họa */
+        .illustration-icon {
+            font-size: 6rem;
+            text-align: center;
+            display: block;
+            margin: 1.5rem auto;
+            opacity: 0.7;
+        }
+        .slide-model .illustration-icon { color: #00796b; }
+        .slide-process .illustration-icon { color: #512da8; }
+        .illustration-icon.orange { color: #FF9800; }
+        .illustration-icon.red { color: #e53e3e; }
+        .illustration-icon.green { color: #38a169; }
+        .illustration-icon.blue { color: #1e88e5; }
+        
+
+        /* Các lớp tiện ích cho slide (màu nền) */
+        .slide-title {
+             background-image: linear-gradient(rgba(0, 150, 136, 0.85), rgba(0, 115, 105, 0.95)), url('https://images.unsplash.com/photo-1517048676732-d65bc937f952?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3wzNjAzN3wwfDF8cGF0a3x8fDE3NjA3fHx8fHw&ixlib=rb-4.0.3&q=80&w=2048'); /* Gradient xanh lá */
+        }
+        
+        .slide-section-title {
+            background: linear-gradient(135deg, #009688 0%, #00796b 100%); /* Gradient xanh lá */
+            justify-content: center;
+            align-items: center;
+            text-align: center; /* Căn giữa tiêu đề phần */
+        }
+        
+        .slide-section-title h1 { color: #fff; text-shadow: 1px 1px 3px rgba(0,0,0,0.5); }
+        .slide-section-title h2 { color: #FFEB3B; font-size: 2.5rem; margin-top: 0.5rem; text-shadow: 1px 1px 3px rgba(0,0,0,0.3);} /* Tiêu đề phụ */
+
+        .slide-model {
+            background-color: #f8f9fa; /* Nền sáng hơn */
+            color: #343a40; /* Chữ đen nhạt */
+        }
+        
+        .slide-table { /* Dành cho slide có bảng */
+             background: linear-gradient(to bottom right, #e0f2f1, #b2dfdb); /* Gradient nền bảng */
+             color: #004d40; /* Chữ xanh lá đậm */
+        }
+        .slide-table h2 { color: #00695c; } /* Tiêu đề bảng đậm hơn */
+        .slide-table th { background-color: #00695c; color: white; padding: 0.85rem; text-align: left; font-weight: 500;}
+        .slide-table td { padding: 0.85rem; border-bottom: 1px solid #a7d8d4; }
+        .slide-table table { width: 100%; border-collapse: collapse; margin-top: 1.5rem; font-size: 1.25rem; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border-radius: 4px; overflow: hidden;} 
+
+        .slide-process { /* Dành cho slide quy trình */
+             background: linear-gradient(to bottom right, #ede7f6, #d1c4e9); /* Gradient nền quy trình */
+             color: #311b92; /* Chữ tím đậm */
+        }
+        .slide-process h2 { color: #512da8; }
+        .slide-process .step { background-color: #b39ddb; padding: 1rem; border-radius: 8px; text-align: center; font-weight: 500; box-shadow: 0 3px 6px rgba(0,0,0,0.15); transition: transform 0.2s ease; }
+        .slide-process .step:hover { transform: translateY(-3px); } /* Hiệu ứng hover nhẹ */
+        .slide-process .arrow { font-size: 2.5rem; color: #673ab7; align-self: center; }
+
+        .slide-graph { /* Dành cho slide đồ thị */
+            background-color: #ffffff; /* Nền trắng */
+            color: #333;
+        }
+        .slide-graph h2 { color: #5C6BC0; }
+
+        .slide-final {
+            background: linear-gradient(135deg, #1a237e 0%, #303f9f 100%); /* Gradient xanh đậm */
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+         .slide-final h1, .slide-final h2, .slide-final p { text-shadow: 1px 1px 3px rgba(0,0,0,0.5); }
+        
+        /* Hiệu ứng cho build items */
+        .build-item {
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out; /* Thêm transition transform */
+            margin-top: 1rem;
+            transform: translateY(10px); /* Hiệu ứng trượt nhẹ lên */
+        }
+        
+        .build-item.visible {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0); /* Về vị trí cũ */
+        }
+
+        /* Định dạng văn bản chung */
+        h1, h2, h3, p, li, span {
+            font-size: 1.65rem; /* Tăng nhẹ lại */
+            line-height: 1.45; /* Tăng khoảng cách dòng */
+            color: inherit;
+        }
+
+        h1 {
+            font-size: 4.2rem; 
+            font-weight: 700;
+            margin-bottom: 1.2rem;
+            color: #FFFFFF;
+        }
+        
+        /* Tiêu đề slide tiêu đề */
+        .slide-title h1 {
+            font-size: 5.2rem;
+            text-shadow: 2px 2px 8px rgba(0,0,0,0.7);
+        }
+        
+        .slide-title h2 {
+            font-size: 2.3rem;
+            font-weight: 300;
+            color: #FFEB3B; /* Vàng */
+            text-shadow: 1px 1px 4px rgba(0,0,0,0.7);
+        }
+
+        h2 {
+            font-size: 3rem; /* Tăng lại */
+            font-weight: 500;
+            color: #FF9800; /* Cam */
+            margin-bottom: 1rem;
+        }
+        
+        h3 {
+            font-size: 2.1rem; /* Tăng lại */
+            font-weight: 500;
+            color: #5C6BC0; /* Xanh */
+            margin-bottom: 0.7rem;
+        }
+        
+        .slide-model h2 { color: #1a237e; }
+        .slide-model h3 { color: #00796b; } /* Đậm hơn */
+        
+        /* Đánh số La Mã */
+        .roman-numeral {
+            font-size: 2.6rem; 
+            color: #FFA726; 
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+        .slide-model .roman-numeral { color: #00695c; } 
+        .slide-process .roman-numeral { color: #512da8; }
+
+        p, ul {
+            font-size: 1.65rem; /* Tăng lại */
+            font-weight: 300;
+            margin-bottom: 0.9rem;
+            max-width: 95%; 
+        }
+
+        ul {
+            list-style-type: none;
+            padding-left: 0;
+        }
+
+        li {
+            padding-left: 2.8rem; /* Tăng padding */
+            position: relative;
+            margin-bottom: 0.5rem; 
+        }
+        
+        /* Biểu tượng mặc định */
+        li::before {
+            content: '\f058'; 
+            font-family: 'Font Awesome 6 Free';
+            font-weight: 900;
+            color: #FF9800; /* Cam */
+            position: absolute;
+            left: 0;
+            top: 5px; /* Điều chỉnh */
+            font-size: 1.4rem; 
+        }
+        
+        /* Biểu tượng cho đánh số 1, 2, 3 */
+        ul.numbered-list > li::before {
+             content: counter(list-item) "."; 
+             counter-increment: list-item;
+             font-weight: bold;
+             color: inherit; 
+             font-size: 1.65rem; 
+             left: 0;
+             top: 0; 
+             width: 2.2rem; /* Tăng nhẹ */
+             text-align: right;
+             padding-right: 0.6rem; /* Tăng nhẹ */
+        }
+        ul.numbered-list { counter-reset: list-item; }
+        
+        /* Đổi thành A, B, C */
+         ul.alpha-list > li::before {
+             content: counter(list-item, upper-alpha) "."; /* Sử dụng upper-alpha */
+             counter-increment: list-item;
+             font-weight: normal; 
+             color: inherit;
+             font-size: 1.65rem;
+             left: 0;
+             top: 0;
+             width: 2.2rem; 
+             text-align: right;
+             padding-right: 0.6rem;
+        }
+        ul.alpha-list { counter-reset: list-item; padding-left: 1rem; }
+
+
+        .slide-model li::before, .slide-process li::before, .slide-table li::before { color: #00796b; } /* Đậm hơn */
+        .slide-model ul.numbered-list > li::before, .slide-process ul.numbered-list > li::before,
+        .slide-model ul.alpha-list > li::before, .slide-process ul.alpha-list > li::before { color: inherit; }
+
+
+        cite {
+            display: inline-block;
+            font-size: 0.9rem; 
+            color: #adb5bd; /* Xám nhạt hơn */
+            font-style: italic;
+            margin-left: 6px;
+        }
+        
+        .slide-model cite, .slide-process cite, .slide-table cite, .slide-graph cite { color: #6c757d; } /* Xám đậm hơn */
+
+        /* Các nút điều khiển bên ngoài */
+        #controls {
+            position: fixed;
+            bottom: 1.5rem; /* Nâng lên một chút */
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            align-items: center;
+            gap: 1.2rem; /* Tăng khoảng cách */
+            z-index: 100;
+            transition: opacity 0.3s ease;
+        }
+        
+        /* Nút điều hướng Trái/Phải */
+        #prev, #next {
+            position: fixed;
+            top: 50%;
+            transform: translateY(-50%);
+            background-color: rgba(0, 0, 0, 0.4); /* Đậm hơn */
+            color: #fff;
+            border: none;
+            padding: 0.85rem 1.1rem; /* To hơn chút */
+            border-radius: 50%;
+            cursor: pointer;
+            z-index: 100;
+            font-size: 1.6rem; /* To hơn chút */
+            transition: all 0.3s ease;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+        }
+        #prev { left: 2rem; } /* Ra ngoài thêm */
+        #next { right: 2rem; }
+        
+        #prev:hover, #next:hover, #controls button:hover {
+            background-color: rgba(255, 152, 0, 0.9); /* Cam đậm hơn khi hover */
+            transform: translateY(-2px) scale(1.05); /* Hiệu ứng hover nhẹ */
+             box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        }
+        #controls button:active {
+             transform: translateY(0px) scale(1);
+        }
+
+        
+        /* Nút điều khiển trong thanh control */
+        #controls button {
+            background-color: rgba(0, 0, 0, 0.4); /* Đậm hơn */
+            color: white;
+            border: none;
+            border-radius: 0.35rem; /* Bo hơn chút */
+            padding: 0.6rem 1.1rem; /* Cao hơn chút */
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        /* Thanh tiến trình (chấm tròn) */
+        #progress-bar {
+            display: flex;
+            gap: 0.6rem; /* Giãn cách hơn */
+            align-items: center;
+        }
+        
+        .progress-dot {
+            width: 13px; /* To hơn */
+            height: 13px;
+            border-radius: 50%;
+            background-color: rgba(255, 255, 255, 0.4); /* Sáng hơn */
+            border: 1px solid rgba(0, 0, 0, 0.2); /* Viền nhẹ */
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+         .progress-dot:hover {
+             transform: scale(1.2);
+         }
+        
+        .progress-dot.active {
+            background-color: #FF9800; /* Cam */
+             border-color: #e68a00; /* Cam đậm hơn */
+             transform: scale(1.1); /* To hơn chút khi active */
+        }
+        
+        /* Số trang */
+        #page-number {
+            color: #fff;
+            font-size: 1rem;
+            background-color: rgba(0,0,0,0.4);
+            padding: 0.2rem 0.6rem;
+            border-radius: 4px;
+        }
+
+        /* Chế độ focus (tự động ẩn) */
+        .faded {
+            opacity: 0;
+            pointer-events: none; /* Không cho click khi ẩn */
+        }
+        
+        /* Footer bản quyền */
+        #footer {
+            position: fixed;
+            bottom: 10px;
+            right: 15px;
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.4); /* Mờ hơn */
+            z-index: 101;
+            font-family: Arial, sans-serif;
+            transition: opacity 0.3s ease;
+        }
+        
+        /* Tooltip style */
+        .tooltip {
+          position: relative;
+          display: inline-block;
+          border-bottom: 1px dotted #999; /* Rõ hơn */
+          cursor: help;
+          color: #64b5f6; /* Màu xanh dương cho tooltip */
+        }
+        .slide-model .tooltip { color: #1e88e5; } /* Đậm hơn trên nền sáng */
+
+        .tooltip .tooltiptext {
+          visibility: hidden;
+          width: 280px; /* Rộng hơn */
+          background-color: #333; /* Nền đậm hơn */
+          color: #fff;
+          text-align: left;
+          border-radius: 6px;
+          padding: 12px; /* Padding hơn */
+          position: absolute;
+          z-index: 10; /* Cao hơn */
+          bottom: 130%; /* Lên cao hơn */
+          left: 50%;
+          margin-left: -140px; 
+          opacity: 0;
+          transition: opacity 0.3s ease-in-out;
+          font-size: 1rem; 
+          font-family: Arial, sans-serif;
+          line-height: 1.4; /* Tăng khoảng cách dòng */
+          box-shadow: 0 3px 8px rgba(0,0,0,0.4);
+        }
+         .tooltip .tooltiptext::after { /* Mũi tên tooltip */
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            margin-left: -5px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: #333 transparent transparent transparent;
+        }
+
+
+        .tooltip:hover .tooltiptext {
+          visibility: visible;
+          opacity: 1;
+        }
+        
+        /* Highlight for Red/Green Circles */
+        .red-circle { color: #e53e3e; font-weight: bold; background-color: rgba(229, 62, 62, 0.1); padding: 0.1rem 0.3rem; border-radius: 4px;}
+        .green-circle { color: #38a169; font-weight: bold; background-color: rgba(56, 161, 105, 0.1); padding: 0.1rem 0.3rem; border-radius: 4px;}
+        
+    </style>
+</head>
+<body>
+
+    <!-- Container chính cho "Sân khấu" -->
+    <div id="presentation-container">
+        
+        <!-- Thẻ chứa Slide (Nơi nội dung được hiển thị) -->
+        <div id="slide-container">
+
+            <!-- Slide 1: Tiêu đề Buổi 2 -->
+            <div class="slide active slide-title" id="slide-2-1" 
+                 data-notes="Chào mừng các anh chị quay trở lại Buổi 2. Hôm nay chúng ta sẽ đi sâu vào kỹ thuật xây dựng cấu trúc lương bài bản, công bằng và cạnh tranh.">
+                <h2 contenteditable="true">Buổi 2:</h2>
+                <h1 contenteditable="true">Thiết kế Cấu trúc Lương Cạnh tranh</h1>
+            </div>
+
+            <!-- Slide 2: Mục tiêu Buổi 2 -->
+            <div class="slide" id="slide-2-2" 
+                 data-notes="Mục tiêu của buổi này rất thực tế: Hiểu đánh giá công việc, biết cách dùng dữ liệu thị trường và cuối cùng là xây dựng được dải lương.">
+                <h2 contenteditable="true">Mục tiêu Buổi 2</h2>
+                <ul>
+                    <li contenteditable="true" class="build-item"><b>Hiểu và áp dụng</b> được phương pháp đánh giá giá trị công việc để đảm bảo <span class="tooltip">công bằng nội bộ<span class="tooltiptext">Internal equity: Đảm bảo sự khác biệt về lương giữa các công việc trong cùng tổ chức dựa trên các yếu tố hợp lý, khách quan.</span></span>.</li>
+                    <li contenteditable="true" class="build-item"><b>Nắm vững</b> quy trình phân tích dữ liệu thị trường để đảm bảo <span class="tooltip">tính cạnh tranh bên ngoài<span class="tooltiptext">External competitiveness: Đảm bảo mức lương của tổ chức cạnh tranh so với các công ty khác trên thị trường lao động.</span></span>.</li>
+                    <li contenteditable="true" class="build-item"><b>Thiết kế</b> được cấu trúc ngạch và dải lương (pay grades & salary ranges) một cách khoa học.</li>
+                    <li contenteditable="true" class="build-item"><b>Biết cách quản trị</b> cấu trúc lương, bao gồm xử lý các trường hợp ngoại lệ.</li>
+                </ul>
+            </div>
+
+            <!-- Slide 3: Cấu trúc Nội dung Buổi 2 -->
+            <div class="slide" id="slide-2-3" 
+                 data-notes="Chúng ta sẽ đi qua 3 Phần chính: Đánh giá công việc, Phân tích thị trường, và Xây dựng cấu trúc lương.">
+                <h2 contenteditable="true">Cấu trúc Nội dung Buổi 2</h2>
+                <h3 contenteditable="true" class="build-item roman-numeral" style="color: white; font-size: 2.5rem;">Phần I: Đánh giá Giá trị Công việc</h3>
+                <p contenteditable="true" class="build-item" style="padding-left: 2rem;">Nền tảng cho Sự Công bằng Nội bộ</p>
+                
+                <h3 contenteditable="true" class="build-item roman-numeral" style="color: white; font-size: 2.5rem;">Phần II: Phân tích Dữ liệu Thị trường</h3>
+                <p contenteditable="true" class="build-item" style="padding-left: 2rem;">Đảm bảo Tính Cạnh tranh Bên ngoài</p>
+                
+                <h3 contenteditable="true" class="build-item roman-numeral" style="color: white; font-size: 2.5rem;">Phần III: Xây dựng Ngạch và Dải lương</h3>
+                <p contenteditable="true" class="build-item" style="padding-left: 2rem;">Quản trị Cấu trúc Lương</p>
+            </div>
+            
+            <!-- --- PHẦN I: ĐÁNH GIÁ GIÁ TRỊ CÔNG VIỆC --- -->
+            
+            <!-- Slide 4: Tiêu đề Phần I -->
+            <div class="slide slide-section-title" id="slide-2-4"
+                 data-notes="Bắt đầu với Phần I: Làm sao để xác định giá trị công việc một cách công bằng?">
+                 <h1 contenteditable="true">Phần I</h1>
+                 <h2 contenteditable="true">Đánh giá Giá trị Công việc</h2>
+            </div>
+
+            <!-- Slide 5: Giới thiệu Đánh giá Công việc -->
+            <div class="slide" id="slide-2-5" 
+                 data-notes="Đánh giá công việc là quy trình hệ thống để xác định giá trị tương đối của các công việc.">
+                <h2 contenteditable="true"><span class="roman-numeral">I.</span> Giới thiệu Đánh giá Công việc</h2>
+                <p contenteditable="true" class="build-item">Là quy trình có hệ thống nhằm xác định <span class="font-semibold text-orange-400">giá trị tương đối</span> của các công việc trong một tổ chức.<cite>(SHRM)</cite></p>
+                <p contenteditable="true" class="build-item">Tạo ra một <span class="font-semibold text-orange-400">hệ thống cấp bậc công việc nội bộ</span>.</p>
+                 <i class="fas fa-sitemap illustration-icon orange"></i>
+            </div>
+            
+            <!-- Slide 6: Mục đích: Công bằng Nội bộ -->
+            <div class="slide" id="slide-2-6"
+                 data-notes="Mục tiêu chính là đảm bảo công bằng nội bộ. Lương khác nhau phải dựa trên lý do chính đáng.">
+                 <h2 contenteditable="true">Tại sao cần Đánh giá Công việc?</h2>
+                 <p contenteditable="true">Là nền tảng của <span class="tooltip"><span class="font-semibold text-orange-400">công bằng nội bộ</span> (internal equity)<span class="tooltiptext">Đảm bảo sự khác biệt về lương giữa các công việc trong cùng tổ chức dựa trên các yếu tố hợp lý, khách quan.</span></span>.<cite>(SHRM)</cite></p>
+                <p contenteditable="true" class="build-item">Đảm bảo sự khác biệt về mức lương giữa các công việc dựa trên các yếu tố:</p>
+                 <ul class="alpha-list">
+                    <li contenteditable="true" class="build-item">Hợp lý</li>
+                    <li contenteditable="true" class="build-item">Khách quan</li>
+                    <li contenteditable="true" class="build-item">Không thiên vị</li>
+                </ul>
+                 <i class="fas fa-balance-scale-right illustration-icon orange"></i>
+            </div>
+
+            <!-- Slide 7: Giới thiệu Phương pháp Chấm điểm Yếu tố -->
+            <div class="slide slide-model" id="slide-2-7"
+                 data-notes="Phương pháp phổ biến và tin cậy nhất là Chấm điểm theo Yếu tố.">
+                <h2 contenteditable="true"><span class="roman-numeral">II.</span> Phương pháp Chấm điểm theo Yếu tố</h2>
+                <h3 contenteditable="true">(Point-Factor Method)</h3>
+                <p contenteditable="true" class="build-item">Là phương pháp <span class="font-semibold">định lượng</span> phổ biến và có tính bảo vệ cao nhất.<cite>(SHRM)</cite></p>
+                <p contenteditable="true" class="build-item">Giảm thiểu tính chủ quan và thiên vị cá nhân.<cite>(AIHR)</cite></p>
+                <p contenteditable="true" class="build-item">Lượng hóa giá trị công việc dựa trên các yếu tố được xác định trước.</p>
+                 <i class="fas fa-clipboard-check illustration-icon"></i>
+            </div>
+            
+            <!-- Slide 8: Quy trình Chấm điểm - Tổng quan -->
+            <div class="slide slide-process" id="slide-2-8"
+                 data-notes="Quy trình gồm 4 bước chính: Chọn yếu tố, Xác định mức độ, Gán trọng số/điểm, và cuối cùng là Đánh giá.">
+                <h2 contenteditable="true">1. Quy trình Chấm điểm theo Yếu tố (4 Bước)</h2>
+                <div class="grid grid-cols-7 gap-4 items-center mt-6 text-center">
+                    <div class="build-item step col-span-1"><b>Bước 1:</b><br>Chọn Yếu tố</div>
+                    <div class="build-item arrow col-span-1"><i class="fas fa-arrow-right"></i></div>
+                    <div class="build-item step col-span-1"><b>Bước 2:</b><br>Xác định Mức độ</div>
+                    <div class="build-item arrow col-span-1"><i class="fas fa-arrow-right"></i></div>
+                    <div class="build-item step col-span-1"><b>Bước 3:</b><br>Gán Trọng số & Điểm</div>
+                    <div class="build-item arrow col-span-1"><i class="fas fa-arrow-right"></i></div>
+                     <div class="build-item step col-span-1"><b>Bước 4:</b><br>Đánh giá Công việc</div>
+                </div>
+            </div>
+
+            <!-- Slide 9: Bước 1: Chọn Yếu tố -->
+            <div class="slide slide-process" id="slide-2-9"
+                 data-notes="Bước 1: Chọn 4-5 yếu tố chung, đo lường được. ILO và EEOC công nhận 4 yếu tố này.">
+                <h2 contenteditable="true">2. Bước 1: Lựa chọn Yếu tố Đánh giá</h2>
+                <h3 contenteditable="true">(Compensable Factors)</h3>
+                <p contenteditable="true">Lựa chọn từ 4 đến 5 yếu tố <span class="font-semibold">chung</span>, <span class="font-semibold">có thể đo lường được</span>.<cite>(SHRM)</cite></p>
+                <p contenteditable="true" class="build-item">Các yếu tố phổ quát được ILO/EEOC công nhận:<cite>(gradar)</cite></p>
+                <div class="grid grid-cols-4 gap-4 mt-4 text-center">
+                    <div class="build-item p-3 bg-blue-100 rounded text-blue-800 shadow-md">
+                        <i class="fas fa-graduation-cap fa-2x"></i><p class="mt-1 font-medium">Kỹ năng (Skill)</p>
+                    </div>
+                     <div class="build-item p-3 bg-green-100 rounded text-green-800 shadow-md">
+                        <i class="fas fa-tasks fa-2x"></i><p class="mt-1 font-medium">Trách nhiệm (Responsibility)</p>
+                    </div>
+                     <div class="build-item p-3 bg-yellow-100 rounded text-yellow-800 shadow-md">
+                        <i class="fas fa-dumbbell fa-2x"></i><p class="mt-1 font-medium">Sự nỗ lực (Effort)</p>
+                    </div>
+                     <div class="build-item p-3 bg-red-100 rounded text-red-800 shadow-md">
+                        <i class="fas fa-hard-hat fa-2x"></i><p class="mt-1 font-medium">Điều kiện làm việc (Working Conditions)</p>
+                    </div>
+                </div>
+                 <p contenteditable="true" class="build-item mt-2 text-sm"><i>Có thể chia nhỏ thành yếu tố phụ (ví dụ: Kỹ năng -> Trình độ học vấn, Mức độ phức tạp).</i><cite>(SHRM)</cite></p>
+            </div>
+
+            <!-- Slide 10: Bước 2: Xác định Mức độ -->
+            <div class="slide slide-process" id="slide-2-10"
+                 data-notes="Bước 2: Với mỗi yếu tố, xác định các cấp độ tăng dần giá trị. Phải có mô tả rõ ràng.">
+                <h2 contenteditable="true">3. Bước 2: Xác định các Mức độ của Yếu tố</h2>
+                 <h3 contenteditable="true">(Factor Degrees)</h3>
+                <p contenteditable="true">Đối với mỗi yếu tố, xác định các <span class="font-semibold">cấp độ riêng biệt</span> thể hiện giá trị tăng dần.<cite>(AIHR)</cite></p>
+                <p contenteditable="true" class="build-item">Ví dụ: Yếu tố 'Trách nhiệm'</p>
+                <div class="grid grid-cols-3 gap-4 mt-3">
+                    <div class="build-item p-3 bg-gray-200 rounded text-center shadow">
+                        <b>Mức độ 1: Thấp</b><p class="text-xs mt-1">Công việc cá nhân, tác động sai sót nhỏ.</p>
+                    </div>
+                    <div class="build-item p-3 bg-gray-300 rounded text-center shadow">
+                        <b>Mức độ 2: Trung bình</b><p class="text-xs mt-1">Hướng dẫn người khác, tác động vừa phải.</p>
+                    </div>
+                    <div class="build-item p-3 bg-gray-400 rounded text-center shadow">
+                        <b>Mức độ 3: Cao</b><p class="text-xs mt-1">Quản lý nhóm/dự án, tác động lớn.</p>
+                    </div>
+                </div>
+                 <p contenteditable="true" class="build-item mt-3">Cần có mô tả <span class="font-semibold">rõ ràng</span> và <span class="font-semibold">khách quan</span> cho từng mức độ.</p>
+            </div>
+
+            <!-- Slide 11: Bước 3: Gán Trọng số & Điểm -->
+            <div class="slide slide-process" id="slide-2-11"
+                 data-notes="Bước 3: Gán trọng số thể hiện tầm quan trọng của yếu tố, sau đó gán điểm cho từng mức độ.">
+                <h2 contenteditable="true">4. Bước 3: Gán Trọng số và Điểm</h2>
+                <h3 contenteditable="true">(Determine Weights and Assign Points)</h3>
+                <p contenteditable="true">Gán <span class="font-semibold">trọng số</span> (%) cho mỗi yếu tố dựa trên tầm quan trọng của nó đối với tổ chức.<cite>(SHRM)</cite></p>
+                 <p contenteditable="true" class="build-item">Ví dụ:</p>
+                 <ul class="text-base alpha-list">
+                     <li contenteditable="true" class="build-item">Kỹ năng: 50%</li>
+                     <li contenteditable="true" class="build-item">Trách nhiệm: 30%</li>
+                     <li contenteditable="true" class="build-item">Nỗ lực: 20%</li>
+                 </ul>
+                 <p contenteditable="true" class="build-item mt-2">Sau đó, gán <span class="font-semibold">điểm</span> cho từng mức độ của mỗi yếu tố.</p>
+                 <p contenteditable="true" class="build-item">Kết quả: Một "<span class="tooltip">sổ tay chấm điểm<span class="tooltiptext">Hoặc ma trận điểm, dùng làm công cụ chuẩn để đánh giá các công việc.</span></span>" chi tiết.</p>
+            </div>
+
+            <!-- Slide 12: Bảng 2: Ma trận Mẫu -->
+            <div class="slide slide-table" id="slide-2-12"
+                 data-notes="Đây là một ví dụ về ma trận chấm điểm. Lưu ý các yếu tố, mức độ, trọng số và điểm tương ứng.">
+                 <h2 contenteditable="true">Ví dụ: Ma trận Đánh giá Công việc (Bảng 2)<cite>(Tham khảo)</cite></h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th contenteditable="true">Yếu tố (Trọng số)</th>
+                            <th contenteditable="true">Mức độ 1</th>
+                            <th contenteditable="true">Mức độ 2</th>
+                            <th contenteditable="true">Mức độ 3</th>
+                            <th contenteditable="true">Mức độ 4</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td contenteditable="true"><b>Kỹ năng (50%)</b></td>
+                            <td></td><td></td><td></td><td></td> <!-- Row separator -->
+                        </tr>
+                        <tr>
+                            <td contenteditable="true" style="padding-left: 2rem;">Trình độ học vấn</td>
+                            <td contenteditable="true">THPT (25đ)</td>
+                            <td contenteditable="true">Cử nhân (50đ)</td>
+                            <td contenteditable="true">Thạc sĩ (75đ)</td>
+                            <td contenteditable="true">Tiến sĩ (100đ)</td>
+                        </tr>
+                        <tr>
+                            <td contenteditable="true" style="padding-left: 2rem;">Kinh nghiệm</td>
+                            <td contenteditable="true">&lt; 2 năm (25đ)</td>
+                            <td contenteditable="true">2-5 năm (50đ)</td>
+                            <td contenteditable="true">5-10 năm (75đ)</td>
+                            <td contenteditable="true">&gt; 10 năm (100đ)</td>
+                        </tr>
+                        <tr>
+                            <td contenteditable="true"><b>Trách nhiệm (30%)</b></td>
+                             <td></td><td></td><td></td><td></td> <!-- Row separator -->
+                        </tr>
+                         <tr>
+                            <td contenteditable="true" style="padding-left: 2rem;">Phạm vi kiểm soát</td>
+                            <td contenteditable="true">Cá nhân (30đ)</td>
+                            <td contenteditable="true">Hướng dẫn (60đ)</td>
+                            <td contenteditable="true">Quản lý nhóm (90đ)</td>
+                            <td contenteditable="true">Quản lý PB (120đ)</td>
+                        </tr>
+                         <tr>
+                            <td contenteditable="true" style="padding-left: 2rem;">Tác động sai sót</td>
+                            <td contenteditable="true">Nhỏ (30đ)</td>
+                            <td contenteditable="true">Vừa phải (60đ)</td>
+                            <td contenteditable="true">Lớn (90đ)</td>
+                            <td contenteditable="true">Nghiêm trọng (120đ)</td>
+                        </tr>
+                         <tr>
+                            <td contenteditable="true"><b>Nỗ lực (20%)</b></td>
+                             <td></td><td></td><td></td><td></td> <!-- Row separator -->
+                        </tr>
+                         <tr>
+                            <td contenteditable="true" style="padding-left: 2rem;">Mức độ phức tạp</td>
+                            <td contenteditable="true">Lặp lại (20đ)</td>
+                            <td contenteditable="true">Phân tích (40đ)</td>
+                            <td contenteditable="true">Vấn đề phức tạp (60đ)</td>
+                            <td contenteditable="true">Chiến lược, Đổi mới (80đ)</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+             <!-- Slide 13: Bước 4: Đánh giá Công việc -->
+            <div class="slide slide-process" id="slide-2-13"
+                 data-notes="Bước 4: Áp dụng sổ tay/ma trận này vào các bản mô tả công việc để tính tổng điểm.">
+                <h2 contenteditable="true">5. Bước 4: Đánh giá Công việc</h2>
+                <h3 contenteditable="true">(Evaluate Jobs)</h3>
+                <p contenteditable="true">Áp dụng sổ tay/ma trận chấm điểm vào các <span class="tooltip">Bản Mô tả Công việc (Job Descriptions)<span class="tooltiptext">JD cần được cập nhật và mô tả chính xác công việc thực tế.</span></span>.<cite>(AIHR)</cite></p>
+                <p contenteditable="true" class="build-item">Tính <span class="font-semibold">tổng điểm</span> cho mỗi công việc.</p>
+                <p contenteditable="true" class="build-item">Kết quả: Một <span class="font-semibold text-orange-400">hệ thống cấp bậc công việc được lượng hóa</span>.</p>
+                 <i class="fas fa-check-double illustration-icon"></i>
+            </div>
+            
+            <!-- Slide 14: Tầm quan trọng: Quản lý Rủi ro -->
+            <div class="slide" id="slide-2-14"
+                 data-notes="Phương pháp này rất quan trọng để quản lý rủi ro pháp lý và đảm bảo tính minh bạch.">
+                <h2 contenteditable="true"><span class="roman-numeral">III.</span> Tầm quan trọng: Quản lý Rủi ro & Công bằng</h2>
+                <p contenteditable="true">Phương pháp chấm điểm yếu tố cung cấp một cơ sở vững chắc để:</p>
+                <ul class="alpha-list">
+                    <li contenteditable="true" class="build-item">Bảo vệ trước các khiếu nại về <span class="tooltip">phân biệt đối xử trong trả lương<span class="tooltiptext">Pay discrimination claims: Khiếu nại rằng mức lương khác nhau không dựa trên yếu tố công việc mà dựa trên giới tính, chủng tộc, v.v.</span></span>.<cite>(gradar)</cite></li>
+                     <li contenteditable="true" class="build-item">Đáp ứng yêu cầu về <span class="tooltip">giá trị công việc tương đương<span class="tooltiptext">Comparable worth: Nguyên tắc cho rằng các công việc đòi hỏi kỹ năng, nỗ lực, trách nhiệm tương đương nên được trả lương tương đương, bất kể thị trường lao động.</span></span>.<cite>(gradar)</cite></li>
+                    <li contenteditable="true" class="build-item">Tăng cường <span class="tooltip">tính minh bạch<span class="tooltiptext">Transparency: Sự rõ ràng về cách thức xác định và quản lý lương thưởng trong tổ chức.</span></span> trong hệ thống lương.<cite>(Aon)</cite></li>
+                </ul>
+                 <p contenteditable="true" class="build-item">Đây là một chiến lược <span class="font-semibold text-red-400">quản lý rủi ro</span> cốt lõi.</p>
+                  <i class="fas fa-gavel illustration-icon red"></i>
+            </div>
+
+            <!-- --- PHẦN II: PHÂN TÍCH DỮ LIỆU THỊ TRƯỜNG --- -->
+
+            <!-- Slide 15: Tiêu đề Phần II -->
+            <div class="slide slide-section-title" id="slide-2-15"
+                 data-notes="Chuyển sang Phần II: Làm thế nào để biết mức lương của chúng ta có cạnh tranh với thị trường không?">
+                <h1 contenteditable="true">Phần II</h1>
+                 <h2 contenteditable="true">Phân tích Dữ liệu Thị trường</h2>
+            </div>
+
+            <!-- Slide 16: Vai trò Khảo sát Lương -->
+            <div class="slide" id="slide-2-16" 
+                 data-notes="Chúng ta cần dữ liệu từ các khảo sát lương uy tín để biết thị trường đang trả bao nhiêu.">
+                <h2 contenteditable="true"><span class="roman-numeral">I.</span> Vai trò của Khảo sát Lương</h2>
+                 <p contenteditable="true">Cực kỳ cần thiết để đảm bảo <span class="font-semibold text-orange-400">tính cạnh tranh bên ngoài</span>.<cite>(SHRM)</cite></p>
+                 <p contenteditable="true" class="build-item">Sử dụng dữ liệu <span class="font-semibold">uy tín</span>, báo cáo trực tiếp từ các công ty (ví dụ: Mercer, Aon).<cite>(Mercer)</cite></p>
+                <p contenteditable="true" class="build-item">Giúp tổ chức tránh trả lương <span class="font-semibold text-red-400">quá cao</span> hoặc <span class="font-semibold text-green-400">quá thấp</span>.</p>
+                  <i class="fas fa-search-dollar illustration-icon orange"></i>
+            </div>
+            
+            <!-- Slide 17: Giới thiệu Market Pricing -->
+            <div class="slide slide-model" id="slide-2-17"
+                 data-notes="Định giá thị trường không đơn giản là tra cứu chức danh. Nó đòi hỏi sự phân tích chuyên nghiệp.">
+                <h2 contenteditable="true"><span class="roman-numeral">II.</span> Phương pháp: Định giá Thị trường</h2>
+                <h3 contenteditable="true">(Market Pricing)</h3>
+                 <p contenteditable="true">Không đơn giản là tra cứu một chức danh trong báo cáo khảo sát.</p>
+                 <p contenteditable="true" class="build-item">Đòi hỏi các <span class="tooltip">điều chỉnh thống kê<span class="tooltiptext">Ví dụ: Làm mới dữ liệu theo lạm phát, gia quyền các nguồn khảo sát khác nhau, dùng hồi quy để dự đoán.</span></span> để tạo ra một giá trị thị trường duy nhất, có thể bảo vệ được.<cite>(Mercer)</cite></p>
+                 <p contenteditable="true" class="build-item">Phân biệt giữa phân tích chuyên nghiệp và phỏng đoán nghiệp dư.</p>
+                  <i class="fas fa-chart-bar illustration-icon"></i>
+            </div>
+            
+            <!-- Slide 18: Quy trình Market Pricing - Tổng quan -->
+             <div class="slide slide-process" id="slide-2-18"
+                 data-notes="Quy trình gồm 5 bước: Kết nối công việc, Chọn dữ liệu, Làm mới, Tổng hợp, và Xây dựng đường trả lương.">
+                <h2 contenteditable="true">1. Quy trình Định giá Thị trường (5 Bước)<cite>(Dựa trên Mercer)</cite></h2>
+                <div class="grid grid-cols-9 gap-2 items-center mt-6 text-center text-xs">
+                    <div class="build-item step col-span-1"><b>Bước 1:</b><br>Kết nối CV (Job Match)</div>
+                    <div class="build-item arrow col-span-1"><i class="fas fa-arrow-right"></i></div>
+                    <div class="build-item step col-span-1"><b>Bước 2:</b><br>Chọn/Phân khúc DL (Scope)</div>
+                    <div class="build-item arrow col-span-1"><i class="fas fa-arrow-right"></i></div>
+                    <div class="build-item step col-span-1"><b>Bước 3:</b><br>Làm mới DL (Age Data)</div>
+                     <div class="build-item arrow col-span-1"><i class="fas fa-arrow-right"></i></div>
+                    <div class="build-item step col-span-1"><b>Bước 4:</b><br>Tổng hợp/ Gia quyền (Blend)</div>
+                    <div class="build-item arrow col-span-1"><i class="fas fa-arrow-right"></i></div>
+                    <div class="build-item step col-span-1"><b>Bước 5:</b><br>Xây dựng Đường TLTT</div>
+                </div>
+            </div>
+
+            <!-- Slide 19: Bước 1: Job Matching -->
+            <div class="slide slide-process" id="slide-2-19"
+                 data-notes="Bước 1 rất quan trọng: Kết nối công việc nội bộ với công việc tham chiếu trong khảo sát.">
+                 <h2 contenteditable="true">2. Bước 1: Kết nối Công việc (Job Matching)</h2>
+                 <p contenteditable="true">Kết nối các công việc nội bộ với các <span class="tooltip">công việc tham chiếu (benchmark jobs)<span class="tooltiptext">Các công việc phổ biến, có định nghĩa rõ ràng trong khảo sát lương, dùng làm mốc so sánh.</span></span> trong khảo sát.<cite>(Mercer)</cite></p>
+                 <p contenteditable="true" class="build-item">Dựa trên sự tương đương về:</p>
+                 <ul class="alpha-list">
+                    <li contenteditable="true" class="build-item">Kỹ năng</li>
+                    <li contenteditable="true" class="build-item">Trách nhiệm</li>
+                    <li contenteditable="true" class="build-item">Trình độ chuyên môn</li>
+                 </ul>
+                  <i class="fas fa-puzzle-piece illustration-icon"></i>
+            </div>
+
+             <!-- Slide 20: Bước 2: Data Scoping -->
+            <div class="slide slide-process" id="slide-2-20"
+                 data-notes="Bước 2: Chọn lát cắt dữ liệu phù hợp dựa trên Triết lý Lương thưởng đã xây dựng.">
+                 <h2 contenteditable="true">3. Bước 2: Lựa chọn & Phân khúc Dữ liệu</h2>
+                 <h3 contenteditable="true">(Data Selection & Scoping)</h3>
+                 <p contenteditable="true">Dựa trên <span class="tooltip">Triết lý Lương thưởng<span class="tooltiptext">Đã xác định ở Buổi 1: Vị thế cạnh tranh, đối thủ cạnh tranh là ai?</span></span>, lựa chọn các lát cắt dữ liệu phù hợp:<cite>(Mercer)</cite></p>
+                 <ul class="alpha-list">
+                    <li contenteditable="true" class="build-item">Ngành (Industry)</li>
+                    <li contenteditable="true" class="build-item">Địa lý (Geography)</li>
+                    <li contenteditable="true" class="build-item">Quy mô công ty (Company Size)</li>
+                 </ul>
+                  <p contenteditable="true" class="build-item">Xác định yếu tố dữ liệu cần phân tích (Lương cơ bản, Tổng tiền mặt...).</p>
+                   <i class="fas fa-filter illustration-icon"></i>
+            </div>
+            
+             <!-- Slide 21: Bước 3: Data Aging -->
+            <div class="slide slide-process" id="slide-2-21"
+                 data-notes="Bước 3: Dữ liệu khảo sát luôn cũ. Phải 'làm mới' nó đến hiện tại hoặc tương lai bằng tỷ lệ tăng lương dự báo.">
+                 <h2 contenteditable="true">4. Bước 3: Làm mới Dữ liệu (Data Aging)</h2>
+                 <p contenteditable="true">Dữ liệu khảo sát luôn có độ trễ.</p>
+                  <p contenteditable="true" class="build-item">Cần phải "làm mới" (age) dữ liệu từ ngày hiệu lực của khảo sát đến thời điểm hiện tại hoặc tương lai.<cite>(Mercer)</cite></p>
+                 <p contenteditable="true" class="build-item">Áp dụng một <span class="tooltip">hệ số nhân<span class="tooltiptext">Ví dụ: Nếu tỷ lệ tăng lương dự báo là 5%/năm và dữ liệu cũ 6 tháng, hệ số nhân là 1 + (0.05 / 12 * 6) = 1.025.</span></span> dựa trên dự báo tỷ lệ tăng lương hàng năm.</p>
+                  <i class="fas fa-calendar-alt illustration-icon"></i>
+            </div>
+            
+            <!-- Slide 22: Bước 4: Blending & Weighting -->
+             <div class="slide slide-process" id="slide-2-22"
+                 data-notes="Bước 4: Sử dụng ít nhất 3 nguồn khảo sát. Tổng hợp và gia quyền dựa trên mức độ liên quan.">
+                <h2 contenteditable="true">5. Bước 4: Tổng hợp và Gia quyền Dữ liệu</h2>
+                <h3 contenteditable="true">(Blending and Weighting Data)</h3>
+                <p contenteditable="true">Thực tiễn tốt nhất: Sử dụng <span class="font-semibold text-blue-400">ít nhất 3 nguồn khảo sát</span> cho mỗi công việc.<cite>(Mercer)</cite></p>
+                <p contenteditable="true" class="build-item">Tổng hợp dữ liệu (ví dụ: trung bình đơn giản, trung bình có gia quyền).</p>
+                 <p contenteditable="true" class="build-item">Áp dụng <span class="tooltip">hệ số cộng thêm/chiết khấu<span class="tooltiptext">Ví dụ: Nếu một khảo sát ít liên quan hơn, có thể giảm trọng số hoặc chiết khấu % giá trị lương từ nguồn đó.</span></span> dựa trên mức độ liên quan của nguồn dữ liệu.</p>
+                  <i class="fas fa-blender illustration-icon"></i>
+            </div>
+
+             <!-- Slide 23: Bước 5: Market Pay Line -->
+            <div class="slide slide-process" id="slide-2-23"
+                 data-notes="Bước 5: Vẽ đồ thị với điểm đánh giá và lương thị trường. Dùng hồi quy để tạo đường trả lương thị trường.">
+                 <h2 contenteditable="true">6. Bước 5: Xây dựng Đường trả lương Thị trường</h2>
+                <h3 contenteditable="true">(Market Pay Line)</h3>
+                 <p contenteditable="true">Vẽ biểu đồ:</p>
+                 <ul class="alpha-list">
+                    <li contenteditable="true">Trục hoành (X): Tổng điểm đánh giá công việc nội bộ (từ Phần I).</li>
+                    <li contenteditable="true">Trục tung (Y): Dữ liệu lương thị trường đã tổng hợp (từ Bước 4).</li>
+                 </ul>
+                 <p contenteditable="true" class="build-item">Sử dụng <span class="tooltip">hồi quy đơn giản (simple regression)<span class="tooltiptext">Công cụ có sẵn trong Excel (Data Analysis Toolpak) để tìm đường thẳng phù hợp nhất với các điểm dữ liệu.</span></span> để tạo ra "đường trả lương thị trường".<cite>(SHRM)</cite></p>
+                  <p contenteditable="true" class="build-item">Đường này đại diện toán học cho mức lương thị trường của <span class="italic">mọi</span> công việc.</p>
+            </div>
+            
+             <!-- Slide 24: Minh họa Market Pay Line -->
+            <div class="slide slide-graph" id="slide-2-24"
+                 data-notes="Đây là hình ảnh minh họa đường trả lương thị trường. Mỗi chấm là một công việc tham chiếu. Đường thẳng là kết quả hồi quy.">
+                <h2 contenteditable="true">Minh họa: Đường trả lương Thị trường</h2>
+                 <canvas id="marketPayLineChart" style="max-height: 80%; width: 100%;"></canvas>
+                 <p contenteditable="true" class="text-sm italic text-center mt-2">Đồ thị minh họa: Trục X (Điểm đánh giá công việc), Trục Y (Lương thị trường)</p>
+            </div>
+
+
+            <!-- --- PHẦN III: XÂY DỰNG NGẠCH VÀ DẢI LƯƠNG --- -->
+
+            <!-- Slide 25: Tiêu đề Phần III -->
+            <div class="slide slide-section-title" id="slide-2-25"
+                 data-notes="Đã có đường thị trường, giờ đến Phần III: Biến nó thành cấu trúc ngạch và dải lương cụ thể.">
+                 <h1 contenteditable="true">Phần III</h1>
+                 <h2 contenteditable="true">Xây dựng Ngạch và Dải lương</h2>
+            </div>
+
+            <!-- Slide 26: Từ Đường TLTT -> Ngạch lương -->
+            <div class="slide" id="slide-2-26" 
+                 data-notes="Đầu tiên, nhóm các công việc có điểm tương tự vào các ngạch lương để dễ quản lý.">
+                <h2 contenteditable="true"><span class="roman-numeral">I.</span> Từ Đường trả lương đến Ngạch lương</h2>
+                <h3 contenteditable="true">(Pay Grades)</h3>
+                <p contenteditable="true">Nhóm các công việc có <span class="font-semibold">tổng điểm đánh giá tương tự</span> vào một số lượng ngạch lương ít hơn.</p>
+                <p contenteditable="true" class="build-item">Mục đích: <span class="font-semibold text-green-400">Đơn giản hóa</span> công tác quản trị lương.</p>
+                 <i class="fas fa-layer-group illustration-icon green"></i>
+            </div>
+
+            <!-- Slide 27: Thiết kế Dải lương -->
+            <div class="slide slide-model" id="slide-2-27"
+                 data-notes="Mỗi ngạch sẽ có một dải lương. Đây là cốt lõi của cấu trúc lương.">
+                <h2 contenteditable="true"><span class="roman-numeral">II.</span> Thiết kế Dải lương (Salary Ranges)</h2>
+                <p contenteditable="true">Là <span class="font-semibold text-orange-400">cốt lõi</span> của cấu trúc lương.</p>
+                 <p contenteditable="true" class="build-item">Mỗi ngạch lương (pay grade) sẽ có một dải lương tương ứng.</p>
+                 <p contenteditable="true" class="build-item">Các thành phần chính dựa trên tiêu chuẩn Mercer & WorldatWork.<cite>(WorldatWork)</cite></p>
+                  <i class="fas fa-ruler-combined illustration-icon"></i>
+            </div>
+
+             <!-- Slide 28: Thành phần 1: Trung vị -->
+            <div class="slide slide-model" id="slide-2-28"
+                 data-notes="Thành phần 1: Trung vị, neo vào đường thị trường, là mức lương mục tiêu.">
+                 <h2 contenteditable="true">1. Thành phần: Trung vị (Midpoint)</h2>
+                 <p contenteditable="true">Được <span class="font-semibold">neo</span> vào Đường trả lương Thị trường tại ngạch đó.</p>
+                 <p contenteditable="true" class="build-item">Đại diện cho mức lương <span class="font-semibold text-green-400">mục tiêu</span> cho một nhân viên:<cite>(UCSB HR)</cite></p>
+                 <ul class="alpha-list">
+                    <li contenteditable="true" class="build-item">Có năng lực đầy đủ.</li>
+                     <li contenteditable="true" class="build-item">Đáp ứng tốt yêu cầu công việc.</li>
+                </ul>
+                [Image highlighting the midpoint on a salary range diagram]
+            </div>
+            
+             <!-- Slide 29: Thành phần 2: Độ rộng Dải lương -->
+            <div class="slide slide-model" id="slide-2-29"
+                 data-notes="Thành phần 2: Độ rộng dải lương, là chênh lệch % giữa min và max. Có tiêu chuẩn ngành.">
+                <h2 contenteditable="true">2. Thành phần: Độ rộng (Range Spread)</h2>
+                <p contenteditable="true">Là chênh lệch % giữa mức Tối thiểu (Minimum) và Tối đa (Maximum).</p>
+                <p contenteditable="true" class="build-item">Công thức: <code class="bg-gray-200 p-1 rounded text-base">Spread = (Max - Min) / Min</code><cite>(Mercer)</cite></p>
+                 <p contenteditable="true" class="build-item">Tiêu chuẩn ngành thường là 40-60%.<cite>(Mercer)</cite></p>
+                <ul class="text-sm alpha-list">
+                    <li contenteditable="true" class="build-item">Hẹp hơn (~30%) cho cấp thấp.</li>
+                    <li contenteditable="true" class="build-item">Rộng hơn (đến 100%) cho cấp điều hành.</li>
+                </ul>
+                [Image illustrating the range spread (width) on a salary range diagram]
+            </div>
+
+             <!-- Slide 30: Thành phần 3: Mức chênh lệch Trung vị -->
+            <div class="slide slide-model" id="slide-2-30"
+                 data-notes="Thành phần 3: Mức chênh lệch trung vị, là % khác biệt giữa trung vị 2 ngạch liên tiếp.">
+                 <h2 contenteditable="true">3. Thành phần: Chênh lệch Trung vị</h2>
+                 <h3 contenteditable="true">(Midpoint Progression)</h3>
+                 <p contenteditable="true">Là chênh lệch % giữa Trung vị của hai ngạch lương liên tiếp.</p>
+                 <p contenteditable="true" class="build-item">Công thức: <code class="bg-gray-200 p-1 rounded text-base">Progression = (Mid<sub>N+1</sub> - Mid<sub>N</sub>) / Mid<sub>N</sub></code><cite>(Mercer)</cite></p>
+                 <p contenteditable="true" class="build-item">Phổ biến là 10-20%.<cite>(Mercer)</cite></p>
+                 <p contenteditable="true" class="build-item">Thường lớn hơn ở cấp bậc cao hơn (phản ánh trách nhiệm tăng nhiều hơn).</p>
+                [Image showing multiple salary ranges stacked vertically illustrating midpoint progression]
+            </div>
+            
+            <!-- Slide 31: Bảng 3: Tiêu chuẩn Thiết kế -->
+            <div class="slide slide-table" id="slide-2-31"
+                  data-notes="Bảng này tổng hợp các tiêu chuẩn về Độ rộng và Mức chênh lệch theo cấp bậc công việc.">
+                <h2 contenteditable="true">Tiêu chuẩn Thiết kế Dải lương (Bảng 3)<cite>(Dựa trên Mercer)</cite></h2>
+                 <table>
+                    <thead>
+                        <tr>
+                            <th contenteditable="true">Cấp bậc Công việc</th>
+                            <th contenteditable="true">Độ rộng Dải lương (Spread)</th>
+                            <th contenteditable="true">Mức chênh lệch Trung vị (Progression)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td contenteditable="true">Hỗ trợ/Vận hành</td>
+                            <td contenteditable="true">30% - 40%</td>
+                            <td contenteditable="true">8% - 12%</td>
+                        </tr>
+                         <tr>
+                            <td contenteditable="true">Chuyên viên/Kỹ thuật</td>
+                            <td contenteditable="true">40% - 50%</td>
+                            <td contenteditable="true">10% - 15%</td>
+                        </tr>
+                         <tr>
+                            <td contenteditable="true">Quản lý</td>
+                            <td contenteditable="true">50% - 60%</td>
+                            <td contenteditable="true">15% - 20%</td>
+                        </tr>
+                         <tr>
+                            <td contenteditable="true">Điều hành (Executive)</td>
+                            <td contenteditable="true">60% - 100%</td>
+                            <td contenteditable="true">&gt; 20%</td>
+                        </tr>
+                    </tbody>
+                </table>
+             </div>
+             
+            <!-- Slide 32: Dải lương là Công cụ Động -->
+            <div class="slide slide-model" id="slide-2-32"
+                 data-notes="Thiết kế dải lương là lựa chọn chiến lược, phản ánh văn hóa công ty. Broad bands cho cấu trúc phẳng, narrow grades cho cấu trúc truyền thống.">
+                <h2 contenteditable="true">Dải lương là Công cụ Quản lý Động</h2>
+                <p contenteditable="true">Các tham số thiết kế (độ rộng, chênh lệch) là <span class="font-semibold text-blue-500">lựa chọn chiến lược</span> phản ánh văn hóa & chiến lược nhân tài.<cite>(Mercer)</cite></p>
+                 <div class="grid grid-cols-2 gap-6 mt-6 text-center">
+                    <div class="build-item p-4 bg-blue-100 rounded shadow">
+                        <h3 contenteditable="true" class="text-blue-800">Dải lương rộng (Broad Bands)</h3>
+                        <p contenteditable="true" class="text-sm">Phù hợp cấu trúc phẳng, nhấn mạnh phát triển kỹ năng chiều ngang.</p>
+                         <i class="fas fa-arrows-alt-h illustration-icon blue" style="font-size: 4rem; margin: 1rem auto;"></i>
+                    </div>
+                     <div class="build-item p-4 bg-purple-100 rounded shadow">
+                        <h3 contenteditable="true" class="text-purple-800">Ngạch lương hẹp (Narrow Grades)</h3>
+                        <p contenteditable="true" class="text-sm">Phù hợp cấu trúc cấp bậc truyền thống, thăng tiến rõ ràng.</p>
+                         <i class="fas fa-bars illustration-icon" style="font-size: 4rem; margin: 1rem auto; color: #673ab7;"></i>
+                    </div>
+                 </div>
+                  <p contenteditable="true" class="build-item mt-4">Cấu trúc phải đủ linh hoạt để <span class="font-semibold text-green-500">định hướng</span>, không phải <span class="font-semibold text-red-500">trói buộc</span> quyết định lương.<cite>(Mercer)</cite></p>
+            </div>
+
+            <!-- Slide 33: Quản trị Lương: Xếp lương -->
+             <div class="slide" id="slide-2-33"
+                 data-notes="Khi có dải lương, làm sao xếp lương cho nhân viên? Dựa vào kinh nghiệm, kỹ năng, hiệu suất.">
+                <h2 contenteditable="true"><span class="roman-numeral">III.</span> Quản trị Cấu trúc Lương</h2>
+                <h3 contenteditable="true">1. Xếp lương trong Dải (Placement in Range)</h3>
+                <p contenteditable="true">Xếp lương cho nhân viên trong dải dựa trên:<cite>(UCSB HR)</cite></p>
+                <ul class="alpha-list">
+                    <li contenteditable="true" class="build-item">Kinh nghiệm</li>
+                    <li contenteditable="true" class="build-item">Kỹ năng</li>
+                    <li contenteditable="true" class="build-item">Hiệu suất</li>
+                </ul>
+                 <p contenteditable="true" class="build-item">Thông thường:</p>
+                <ul class="alpha-list">
+                    <li contenteditable="true" class="build-item"><b>Phần dưới (Min - Mid):</b> Nhân viên mới, ít kinh nghiệm, đang học việc.</li>
+                     <li contenteditable="true" class="build-item"><b>Phần giữa (Quanh Mid):</b> Nhân viên đáp ứng tốt yêu cầu, có năng lực đầy đủ.</li>
+                     <li contenteditable="true" class="build-item"><b>Phần trên (Mid - Max):</b> Nhân viên kinh nghiệm dày dặn, hiệu suất vượt trội, có thể là mentor.</li>
+                </ul>
+                 <i class="fas fa-chart-line illustration-icon blue"></i>
+            </div>
+
+            <!-- Slide 34: Xử lý Ngoại lệ: Red Circles -->
+            <div class="slide" id="slide-2-34"
+                 data-notes="Trường hợp lương cao hơn max của dải gọi là Red Circle. Cần có chiến lược quản lý.">
+                <h2 contenteditable="true">2. Xử lý Ngoại lệ: <span class="red-circle">Red Circles</span></h2>
+                <p contenteditable="true">Là nhân viên có mức lương <span class="font-semibold text-red-500">cao hơn mức Tối đa (Maximum)</span> của dải lương.<cite>(BURR Consulting)</cite></p>
+                <p contenteditable="true" class="build-item">Chiến lược quản lý:</p>
+                <ul class="alpha-list">
+                    <li contenteditable="true" class="build-item"><span class="tooltip">Đóng băng lương cơ bản<span class="tooltiptext">Không tăng lương cơ bản hàng năm nữa.</span></span>.</li>
+                     <li contenteditable="true" class="build-item">Thay việc tăng lương bằng <span class="tooltip">thưởng một lần (lump-sum bonus)<span class="tooltiptext">Trả một khoản tiền thưởng thay vì tăng vào lương cơ bản, tránh làm lương vượt xa hơn nữa.</span></span>.</li>
+                     <li contenteditable="true" class="build-item">Tìm kiếm cơ hội thăng chức (nếu phù hợp).</li>
+                </ul>
+                  <i class="fas fa-exclamation-circle illustration-icon red"></i>
+            </div>
+            
+            <!-- Slide 35: Xử lý Ngoại lệ: Green Circles -->
+            <div class="slide" id="slide-2-35"
+                 data-notes="Ngược lại, lương thấp hơn min là Green Circle. Phải ưu tiên điều chỉnh lên min.">
+                <h2 contenteditable="true">3. Xử lý Ngoại lệ: <span class="green-circle">Green Circles</span></h2>
+                <p contenteditable="true">Là nhân viên có mức lương <span class="font-semibold text-green-500">thấp hơn mức Tối thiểu (Minimum)</span> của dải lương.<cite>(BURR Consulting)</cite></p>
+                <p contenteditable="true" class="build-item">Chiến lược quản lý:</p>
+                <ul class="alpha-list">
+                    <li contenteditable="true" class="build-item"><span class="font-semibold text-yellow-500">Ưu tiên</span> điều chỉnh lương lên mức Tối thiểu càng sớm càng tốt.</li>
+                    <li contenteditable="true" class="build-item">Giải quyết các rủi ro về công bằng và giữ chân nhân tài.</li>
+                </ul>
+                  <i class="fas fa-arrow-alt-circle-up illustration-icon green"></i>
+            </div>
+            
+             <!-- --- TỔNG KẾT & HÀNH ĐỘNG --- -->
+
+            <!-- Slide 36: Tổng kết Buổi 2 -->
+            <div class="slide" id="slide-2-36"
+                 data-notes="Tổng kết nhanh Buổi 2: Đã đi qua 3 Phần về kỹ thuật xây dựng cấu trúc lương.">
+                <h2 contenteditable="true">Tổng kết Buổi 2</h2>
+                <ul>
+                    <li contenteditable="true" class="build-item"><b>Phần I: Đánh giá Công việc (Point-Factor)</b> là nền tảng định lượng cho công bằng nội bộ và quản lý rủi ro.</li>
+                    <li contenteditable="true" class="build-item"><b>Phần II: Phân tích Thị trường (Market Pricing)</b> đòi hỏi quy trình 5 bước (Match, Scope, Age, Blend, Line) để đảm bảo cạnh tranh bên ngoài.</li>
+                    <li contenteditable="true" class="build-item"><b>Phần III: Cấu trúc Lương (Grades & Ranges)</b> được thiết kế dựa trên đường TLTT với các thành phần Midpoint, Spread, Progression và cần được quản trị (Placement, Red/Green Circles).</li>
+                </ul>
+            </div>
+
+            <!-- Slide 37: Hành động Tiếp theo -->
+            <div class="slide" id="slide-2-37"
+                 data-notes="Bài tập: Hãy thử áp dụng quy trình này cho 1-2 vị trí benchmark trong tổ chức của bạn.">
+                <h2 contenteditable="true">Hành động Tiếp theo (Homework)</h2>
+                <p contenteditable="true">Chọn 1-2 <span class="tooltip">vị trí benchmark<span class="tooltiptext">Vị trí phổ biến, có dữ liệu khảo sát tốt.</span></span> trong tổ chức của bạn.</p>
+                <p contenteditable="true" class="build-item">Thử áp dụng:</p>
+                <ul>
+                     <li contenteditable="true" class="build-item">Xác định điểm đánh giá công việc (ước lượng dựa trên ma trận mẫu).</li>
+                     <li contenteditable="true" class="build-item">Tìm kiếm dữ liệu lương thị trường (nếu có thể truy cập).</li>
+                     <li contenteditable="true" class="build-item">Xác định dải lương phù hợp (dựa trên bảng tiêu chuẩn).</li>
+                </ul>
+                <p contenteditable="true" class="build-item">Chuẩn bị chia sẻ khó khăn/kết quả trong Buổi 3: "Xây dựng Gói Phúc lợi Hấp dẫn".</p>
+            </div>
+
+            <!-- Slide 38: Q&A -->
+            <div class="slide slide-final" id="slide-2-38"
+                 data-notes="Cảm ơn các anh chị đã tập trung. Giờ là phần Hỏi & Đáp.">
+                <h1 contenteditable="true" class="text-white">Q&A</h1>
+                <h2 contenteditable="true" class="text-white">Hỏi & Đáp</h2>
+            </div>
+            
+            <!-- Slide 39: Cảm ơn & Giới thiệu Buổi 3 -->
+            <div class="slide slide-final" id="slide-2-39">
+                <h1 contenteditable="true" class="text-white">Cảm ơn!</h1>
+                <h2 contenteditable="true" style="color: #FF9800;">Hẹn gặp lại tại Buổi 3:</h2>
+                <p contenteditable="true" class="text-white text-3xl mt-4">Xây dựng Gói Phúc lợi Hấp dẫn và Hiện đại</p>
+            </div>
+
+
+        </div> <!-- Hết #slide-container -->
+
+    </div> <!-- Hết #presentation-container -->
+
+
+    <!-- Các nút điều khiển, thanh tiến trình, số trang (Bên ngoài thẻ slide) -->
+    <button id="prev" title="Trang trước (Mũi tên trái)">
+        <i class="fas fa-chevron-left"></i>
+    </button>
+    <button id="next" title="Trang sau (Mũi tên phải)">
+        <i class="fas fa-chevron-right"></i>
+    </button>
+
+    <div id="controls">
+        <button id="toggle-fs" title="Toàn màn hình (F)">
+            <i class="fas fa-expand"></i>
+        </button>
+        <button id="speaker-notes" title="Chế độ diễn giả (P)">
+            <i class="fas fa-file-alt"></i>
+        </button>
+        <div id="progress-bar"></div>
+        <div id="page-number"></div>
+        <button id="export-html" title="Xuất HTML">
+            <i class="fas fa-file-code"></i> HTML
+        </button>
+        <button id="export-pdf" title="Xuất PDF">
+            <i class="fas fa-file-pdf"></i> PDF
+        </button>
+        <!-- Nút AI (Placeholder) -->
+        <button id="ai-assistant" title="AI Assistant" class="bg-purple-600 hover:bg-purple-700">
+            <i class="fas fa-magic"></i> AI
+        </button>
+    </div>
+
+    <!-- Footer Bản quyền -->
+    <div id="footer">
+        Học Liệu cho đào tạo. Bản quyền thuộc Rosie Đào Hạnh Giang CEO Build Talents
+    </div>
+
+
+    <script>
+        // --- KHỞI TẠO BIẾN ---
+        const slides = document.querySelectorAll('.slide');
+        const slideContainer = document.getElementById('slide-container');
+        const progressBar = document.getElementById('progress-bar');
+        const pageNumber = document.getElementById('page-number');
+        const prevButton = document.getElementById('prev');
+        const nextButton = document.getElementById('next');
+        const controls = document.getElementById('controls');
+        const prevNextButtons = document.querySelectorAll('#prev, #next');
+        const footer = document.getElementById('footer');
+        const fsButton = document.getElementById('toggle-fs');
+        const speakerButton = document.getElementById('speaker-notes');
+        const exportHtmlButton = document.getElementById('export-html');
+        const exportPdfButton = document.getElementById('export-pdf');
+        
+        let currentSlide = 0;
+        let speakerNotesWindow = null;
+        let controlTimeout;
+        let marketPayLineChartInstance = null; // Biến lưu trữ biểu đồ
+
+        // --- HÀM VẼ BIỂU ĐỒ (DỮ LIỆU MẪU) ---
+        function drawMarketPayLineChart() {
+             const ctx = document.getElementById('marketPayLineChart');
+             if (!ctx) return; // Không tìm thấy canvas
+             
+             // Hủy biểu đồ cũ nếu tồn tại
+             if (marketPayLineChartInstance) {
+                 marketPayLineChartInstance.destroy();
+             }
+
+             // Dữ liệu mẫu
+             const jobPoints = [300, 450, 500, 650, 700, 850, 900, 1050]; // Điểm đánh giá công việc
+             const marketSalaries = [40, 55, 60, 78, 85, 105, 115, 140]; // Lương thị trường (ví dụ: triệu VND/năm)
+             
+             // Dữ liệu cho đường hồi quy (tính toán giả định)
+             // Y = aX + b --> Y = 0.12 * X + 5 (Ví dụ)
+             const regressionLineData = jobPoints.map(point => (0.12 * point + 5));
+
+             marketPayLineChartInstance = new Chart(ctx.getContext('2d'), {
+                type: 'scatter', // Sử dụng scatter để hiển thị điểm dữ liệu
+                data: {
+                    datasets: [{
+                        label: 'Lương thị trường (Công việc tham chiếu)',
+                        data: jobPoints.map((point, index) => ({ x: point, y: marketSalaries[index] })),
+                        backgroundColor: 'rgba(255, 152, 0, 0.6)', // Màu cam
+                        borderColor: 'rgba(255, 152, 0, 1)',
+                        pointRadius: 6,
+                    }, {
+                        label: 'Đường trả lương thị trường (Hồi quy)',
+                        data: jobPoints.map((point, index) => ({ x: point, y: regressionLineData[index] })),
+                        type: 'line', // Vẽ đường thẳng
+                        borderColor: 'rgba(92, 107, 192, 1)', // Màu xanh đậm
+                        backgroundColor: 'transparent',
+                        borderWidth: 2,
+                        pointRadius: 0, // Không hiển thị điểm trên đường thẳng
+                        fill: false,
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            type: 'linear',
+                            position: 'bottom',
+                            title: {
+                                display: true,
+                                text: 'Điểm Đánh giá Công việc',
+                                font: { size: 14 }
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Lương Thị trường (Triệu VND/năm)',
+                                font: { size: 14 }
+                            },
+                             beginAtZero: true
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                             callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed.y !== null) {
+                                        label += context.parsed.y + ' Triệu VND (Điểm: ' + context.parsed.x + ')';
+                                    }
+                                    return label;
+                                }
+                            }
+                        },
+                        legend: {
+                            position: 'top',
+                        }
+                    }
+                }
+            });
+        }
+
+        // --- CÁC HÀM XỬ LÝ SLIDE ---
+
+        /**
+         * Hiển thị slide cụ thể, cập nhật thanh tiến trình và số trang
+         */
+        function showSlide(index) {
+            // Đảm bảo index nằm trong khoảng hợp lệ
+            if (index < 0) index = 0;
+            if (index >= slides.length) index = slides.length - 1;
+
+            // Ẩn slide hiện tại
+            slides[currentSlide].classList.remove('active');
+            
+            // Hiện slide mới
+            slides[index].classList.add('active');
+            currentSlide = index;
+
+            // Vẽ lại biểu đồ nếu là slide biểu đồ
+            if (slides[currentSlide].id === 'slide-2-24') {
+                 // Dùng setTimeout để đảm bảo canvas hiển thị trước khi vẽ
+                 setTimeout(drawMarketPayLineChart, 50);
+            } else {
+                 // Hủy biểu đồ cũ nếu rời khỏi slide biểu đồ
+                 if (marketPayLineChartInstance) {
+                     // marketPayLineChartInstance.destroy(); // Tạm thời comment để tránh lỗi khi chuyển nhanh
+                     // marketPayLineChartInstance = null;
+                 }
+            }
+
+
+            // Cập nhật thanh tiến trình
+            updateProgressBar();
+            
+            // Cập nhật số trang
+            pageNumber.textContent = `${currentSlide + 1} / ${slides.length}`;
+            
+            // Đồng bộ với cửa sổ diễn giả (nếu đang mở)
+            syncSpeakerNotes();
+        }
+
+        /**
+         * Xử lý "Build Animations" (Hiệu ứng xuất hiện từng phần)
+         * Trả về `true` nếu một mục đã được hiển thị, `false` nếu không còn mục nào để hiển thị
+         */
+        function handleBuildItems() {
+            const currentSlideElement = slides[currentSlide];
+            // Tìm mục build-item *đầu tiên* chưa hiển thị
+            const hiddenItem = currentSlideElement.querySelector('.build-item:not(.visible)');
+            
+            if (hiddenItem) {
+                hiddenItem.classList.add('visible');
+                return true; // Đã hiển thị một mục, dừng việc chuyển slide
+            }
+            
+            return false; // Không còn mục nào, cho phép chuyển slide
+        }
+
+        /**
+         * Chuyển đến slide tiếp theo (hoặc hiển thị mục build tiếp theo)
+         */
+        function next() {
+            // 1. Ưu tiên hiển thị các mục build-item trước
+            if (handleBuildItems()) {
+                return; // Dừng lại vì đã hiển thị một mục
+            }
+            
+            // 2. Nếu không còn mục build, chuyển slide tiếp theo
+            if (currentSlide < slides.length - 1) {
+                showSlide(currentSlide + 1);
+            }
+        }
+
+        /**
+         * Quay lại slide trước
+         * (Thiết kế: Quay lại sẽ reset các mục build của slide trước)
+         */
+        function prev() {
+            if (currentSlide > 0) {
+                // Reset các mục build của slide hiện tại trước khi rời đi
+                resetBuildItems(slides[currentSlide]);
+                // Chuyển về slide trước
+                showSlide(currentSlide - 1);
+            }
+        }
+        
+        /**
+         * Ẩn tất cả các mục build-item trên một slide
+         */
+        function resetBuildItems(slideElement) {
+            const items = slideElement.querySelectorAll('.build-item.visible');
+            items.forEach(item => item.classList.remove('visible'));
+        }
+
+        // --- CÁC HÀM TIỆN ÍCH & GIAO DIỆN ---
+
+        /**
+         * Tạo các chấm tròn cho thanh tiến trình
+         */
+        function createProgressBar() {
+            progressBar.innerHTML = ''; // Xóa các chấm cũ
+            slides.forEach((_, index) => {
+                const dot = document.createElement('div');
+                dot.classList.add('progress-dot');
+                dot.addEventListener('click', () => {
+                    // Khi nhấn vào, reset build items của slide cũ
+                    resetBuildItems(slides[currentSlide]);
+                    showSlide(index);
+                });
+                progressBar.appendChild(dot);
+            });
+            updateProgressBar();
+        }
+
+        /**
+         * Cập nhật trạng thái active cho chấm tiến trình
+         */
+        function updateProgressBar() {
+            const dots = document.querySelectorAll('.progress-dot');
+            dots.forEach((dot, index) => {
+                if (index === currentSlide) {
+                    dot.classList.add('active');
+                } else {
+                    dot.classList.remove('active');
+                }
+            });
+        }
+
+        /**
+         * Bật/tắt chế độ toàn màn hình
+         */
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                // Yêu cầu toàn màn hình cho body, vì nó chứa cả nền và slide
+                document.documentElement.requestFullscreen().catch(err => {
+                    console.error(`Không thể bật toàn màn hình: ${err.message}`);
+                });
+                fsButton.innerHTML = '<i class="fas fa-compress"></i>';
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                }
+                fsButton.innerHTML = '<i class="fas fa-expand"></i>';
+            }
+        }
+
+        /**
+         * Chế độ focus: Ẩn/hiện các nút điều khiển
+         */
+        function showControls() {
+            clearTimeout(controlTimeout);
+            controls.classList.remove('faded');
+            prevNextButtons.forEach(btn => btn.classList.remove('faded'));
+            footer.classList.remove('faded');
+            
+            controlTimeout = setTimeout(() => {
+                controls.classList.add('faded');
+                prevNextButtons.forEach(btn => btn.classList.add('faded'));
+                footer.classList.add('faded');
+            }, 3000); // Ẩn sau 3 giây
+        }
+        
+        // --- CHẾ ĐỘ DIỄN GIẢ (SPEAKER MODE) ---
+        
+        /**
+         * Mở cửa sổ ghi chú diễn giả
+         */
+        function openSpeakerNotes() {
+            if (speakerNotesWindow && !speakerNotesWindow.closed) {
+                speakerNotesWindow.focus();
+                return;
+            }
+
+            speakerNotesWindow = window.open('', '_blank', 'width=1000,height=600');
+            if (!speakerNotesWindow) {
+                // Sử dụng một thông báo tùy chỉnh thay vì alert
+                showCustomAlert('Vui lòng cho phép cửa sổ pop-up để sử dụng Chế độ Diễn giả.');
+                return;
+            }
+            
+            speakerNotesWindow.document.write(`
+                <html>
+                <head>
+                    <title>Ghi chú Diễn giả</title>
+                    <script src="https://cdn.tailwindcss.com"><\/script> 
+                    <style>
+                        body { font-family: Arial, sans-serif; background-color: #222; color: #fff; padding: 20px; }
+                        #current-slide-view, #next-slide-view { border: 2px solid #555; background-color: #000; overflow: hidden; aspect-ratio: 16/9; width: 100%; }
+                        #notes { background-color: #333; padding: 15px; border-radius: 8px; margin-top: 20px; min-height: 200px; font-size: 1.2rem; line-height: 1.6; }
+                        h2 { font-size: 1.5rem; font-weight: bold; color: #FF9800; margin-bottom: 10px; }
+                        #timer { font-size: 2rem; font-weight: bold; }
+                    </style>
+                </head>
+                <body class="grid grid-cols-2 gap-6">
+                    <div id="left-panel">
+                        <h2>Slide Hiện tại (Đang chiếu)</h2>
+                        <div id="current-slide-view"></div>
+                        <div id="timer-controls" class="mt-4 flex items-center gap-4">
+                             <div id="timer">00:00:00</div>
+                             <button id="start-timer" class="bg-green-500 px-3 py-1 rounded">Bắt đầu</button>
+                             <button id="reset-timer" class="bg-yellow-500 px-3 py-1 rounded">Reset</button>
+                        </div>
+                    </div>
+                    <div id="right-panel">
+                        <h2>Slide Tiếp theo</h2>
+                        <div id="next-slide-view"></div>
+                        <div id="notes">
+                            <h2>Ghi chú:</h2>
+                            <div id="notes-content"></div>
+                        </div>
+                    </div>
+                    
+                    <script>
+                        let startTime, timerInterval;
+                        const timerEl = document.getElementById('timer');
+                        
+                        document.getElementById('start-timer').onclick = () => {
+                            if (!timerInterval) {
+                                startTime = Date.now() - (startTime || 0);
+                                timerInterval = setInterval(() => {
+                                    const elapsed = Date.now() - startTime;
+                                    const hours = String(Math.floor(elapsed / 3600000)).padStart(2, '0');
+                                    const minutes = String(Math.floor((elapsed % 3600000) / 60000)).padStart(2, '0');
+                                    const seconds = String(Math.floor((elapsed % 60000) / 1000)).padStart(2, '0');
+                                    // Sửa lỗi: Sử dụng string concatenation
+                                    timerEl.textContent = hours + ':' + minutes + ':' + seconds; 
+                                }, 1000);
+                                document.getElementById('start-timer').textContent = 'Tạm dừng';
+                            } else {
+                                clearInterval(timerInterval);
+                                timerInterval = null;
+                                document.getElementById('start-timer').textContent = 'Tiếp tục';
+                            }
+                        };
+                        
+                        document.getElementById('reset-timer').onclick = () => {
+                             clearInterval(timerInterval);
+                             timerInterval = null;
+                             startTime = 0;
+                             timerEl.textContent = '00:00:00';
+                             document.getElementById('start-timer').textContent = 'Bắt đầu';
+                        };
+                    <\/script>
+                </body>
+                </html>
+            `);
+            
+            speakerNotesWindow.document.close();
+            syncSpeakerNotes();
+            
+            // Đóng cửa sổ ghi chú khi cửa sổ chính đóng
+            window.addEventListener('beforeunload', () => {
+                if (speakerNotesWindow && !speakerNotesWindow.closed) {
+                    speakerNotesWindow.close();
+                }
+            });
+        }
+
+        /**
+         * Đồng bộ nội dung với cửa sổ diễn giả
+         */
+        function syncSpeakerNotes() {
+            if (!speakerNotesWindow || speakerNotesWindow.closed) return;
+
+            try {
+                const currentSlideEl = slides[currentSlide];
+                const nextSlideEl = slides[currentSlide + 1];
+
+                // 1. Cập nhật view slide hiện tại
+                const currentView = speakerNotesWindow.document.getElementById('current-slide-view');
+                if (currentView) {
+                    currentView.innerHTML = currentSlideEl.innerHTML;
+                    // Áp dụng style nền (nếu có)
+                    currentView.style.backgroundImage = currentSlideEl.style.backgroundImage;
+                    currentView.style.backgroundColor = currentSlideEl.style.backgroundColor;
+                    currentView.style.backgroundSize = 'cover';
+                    currentView.style.backgroundPosition = 'center';
+                    // Áp dụng màu chữ (cho slide nền sáng)
+                    currentView.style.color = currentSlideEl.style.color;
+                }
+                
+                // 2. Cập nhật view slide tiếp theo
+                const nextView = speakerNotesWindow.document.getElementById('next-slide-view');
+                if (nextView) {
+                    if (nextSlideEl) {
+                        nextView.innerHTML = nextSlideEl.innerHTML;
+                        nextView.style.backgroundImage = nextSlideEl.style.backgroundImage;
+                        nextView.style.backgroundColor = nextSlideEl.style.backgroundColor;
+                        nextView.style.backgroundSize = 'cover';
+                        nextView.style.backgroundPosition = 'center';
+                        nextView.style.color = nextSlideEl.style.color;
+                    } else {
+                        nextView.innerHTML = '<div style="padding: 20px; text-align: center; color: #888;">Hết bài trình bày</div>';
+                        nextView.style.backgroundImage = '';
+                        nextView.style.backgroundColor = '#000';
+                    }
+                }
+
+                // 3. Cập nhật ghi chú
+                const notesContent = speakerNotesWindow.document.getElementById('notes-content');
+                if (notesContent) {
+                    const notes = currentSlideEl.getAttribute('data-notes') || 'Không có ghi chú cho slide này.';
+                    notesContent.textContent = notes;
+                }
+            } catch (e) {
+                // Cửa sổ có thể đã bị đóng hoặc lỗi, dừng đồng bộ
+                speakerNotesWindow = null;
+                console.warn("Lỗi đồng bộ cửa sổ diễn giả:", e.message);
+            }
+        }
+        
+        /**
+         * Hiển thị một thông báo tùy chỉnh thay vì alert()
+         */
+        function showCustomAlert(message) {
+            let alertBox = document.getElementById('custom-alert');
+            if (!alertBox) {
+                alertBox = document.createElement('div');
+                alertBox.id = 'custom-alert';
+                alertBox.style.cssText = `
+                    position: fixed;
+                    top: 20px;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    padding: 1rem 1.5rem;
+                    background-color: #FF9800;
+                    color: #000;
+                    border-radius: 8px;
+                    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+                    z-index: 9999;
+                    font-size: 1.2rem;
+                    font-family: Arial, sans-serif;
+                    opacity: 0;
+                    transition: opacity 0.3s ease;
+                `;
+                document.body.appendChild(alertBox);
+            }
+            
+            alertBox.textContent = message;
+            alertBox.style.opacity = '1';
+            
+            setTimeout(() => {
+                alertBox.style.opacity = '0';
+            }, 3000); // Ẩn sau 3 giây
+        }
+        
+        // --- XUẤT BẢN (Placeholder) ---
+        function exportHTML() {
+            showCustomAlert('Tính năng Xuất HTML đang được phát triển.');
+            // (Logic: Sẽ sao chép HTML và CSS của các slide đã chọn vào một tệp mới).
+        }
+
+        function exportPDF() {
+            showCustomAlert('Tính năng Xuất PDF đang được phát triển.');
+            // (Logic: Sẽ sử dụng thư viện jsPDF & html2canvas để chụp và tạo tệp PDF).
+        }
+
+
+        // --- GÁN SỰ KIỆN ---
+        document.addEventListener('DOMContentLoaded', () => {
+            // Khởi tạo slide đầu tiên
+            slides[0].classList.add('active');
+            // Tạo thanh tiến trình
+            createProgressBar();
+            // Cập nhật số trang
+            pageNumber.textContent = `1 / ${slides.length}`;
+            // Vẽ biểu đồ cho slide đầu tiên nếu cần
+             if (slides[0].id === 'slide-2-24') {
+                 drawMarketPayLineChart();
+             }
+            // Hiển thị và bắt đầu đếm ngược ẩn controls
+            showControls();
+        });
+
+        // Điều hướng bằng nút bấm
+        nextButton.addEventListener('click', next);
+        prevButton.addEventListener('click', prev);
+
+        // Điều hướng bằng phím
+        document.addEventListener('keydown', (e) => {
+            // Bỏ qua nếu đang ở trong chế độ diễn giả hoặc đang sửa text
+            if (speakerNotesWindow && !speakerNotesWindow.closed) return;
+            if (e.target.hasAttribute('contenteditable') && e.target.isContentEditable) {
+                return;
+            }
+            
+            switch(e.key) {
+                case 'ArrowRight':
+                case ' ': // Phím cách
+                    e.preventDefault();
+                    next();
+                    break;
+                case 'ArrowLeft':
+                    e.preventDefault();
+                    prev();
+                    break;
+                case 'f':
+                case 'F':
+                    e.preventDefault();
+                    toggleFullscreen();
+                    break;
+                case 'p':
+                case 'P':
+                    e.preventDefault();
+                    openSpeakerNotes();
+                    break;
+            }
+            // Hiển thị lại controls khi có tương tác phím
+            showControls();
+        });
+        
+        // Hiển thị controls khi di chuột
+        document.addEventListener('mousemove', showControls);
+        
+        // Gán sự kiện cho các nút tiện ích
+        fsButton.addEventListener('click', toggleFullscreen);
+        speakerButton.addEventListener('click', openSpeakerNotes);
+        exportHtmlButton.addEventListener('click', exportHTML);
+        exportPdfButton.addEventListener('click', exportPDF);
+        
+        // (Tùy chọn) Lưu nội dung đã chỉnh sửa vào localStorage
+        document.querySelectorAll('[contenteditable="true"]').forEach(el => {
+            el.addEventListener('blur', (e) => {
+                const slideId = e.target.closest('.slide').id;
+                // Tạo một key duy nhất cho nội dung này (ví dụ: slide-1_h1_0)
+                // (Đây là một ví dụ đơn giản, một hệ thống phức tạp hơn sẽ cần ID duy nhất cho mỗi element)
+                // localStorage.setItem(`${slideId}_content`, e.target.innerHTML);
+            });
+        });
+
+    </script>
+</body>
+</html>
+
